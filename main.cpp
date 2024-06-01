@@ -188,6 +188,12 @@ int main() {
     RenderWindow window(VideoMode(1200, 1000), "cazapato");
     window.setFramerateLimit(120);
 
+    Texture backgroundTexture;
+    if (!backgroundTexture.loadFromFile("Fondo.png")) {
+        return EXIT_FAILURE;
+    }
+    Sprite backgroundSprite(backgroundTexture);
+
     while (window.isOpen()) {
         Event event;
         while (window.pollEvent(event)) {
@@ -212,7 +218,7 @@ int main() {
         }
 
         window.clear();//limpia la ventana(no sabia que esto existia pero evita conflictos posteriores ya que al iniciar otra ronda las balas se sobreponian)
-
+        window.draw(backgroundSprite);
         if (gameStarted) {//cosas extrañas para que funcione
             if (pato != nullptr) {
                 pato->update();
