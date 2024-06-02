@@ -78,7 +78,10 @@ class Pato1 {
 private:
     Vector2f speed;
     Vector2f acc;
-    RectangleShape shape;
+    Texture textureAlive;
+    Texture textureDead;
+    Sprite spriteVivo;
+    Sprite spriteMuerto;
     int rebotesx;// ?
     int rebotesy;
 
@@ -94,19 +97,26 @@ public:
 };
 //Rrectangle.cpp
 Pato1::Pato1(Vector2f size, RenderWindow& window) {
-    shape = RectangleShape(size);
-    shape.setPosition({ static_cast<float>(rand() % 1200), 940.0f });//manera fancy que puso chatgpt pq me estaba conflictuando mucho y generaba patos en coordenadas que no iban
-    shape.setFillColor(Color::Red);
+    spriteVivo.setPosition({ static_cast<float>(rand() % 1200), 940.0f });//manera fancy que puso chatgpt pq me estaba conflictuando mucho y generaba patos en coordenadas que no iban
+
+    if (!textureAlive.loadFromFile("texturas/prueba.png")) {
+        std::cout << "Error loading pato_vivo.png" << std::endl;
+    }
+
+    if (!textureDead.loadFromFile("texturas/pato_muerto.png")) {
+        std::cout << "Error loading pato_muerto.png" << std::endl;
+    }
+
+    spriteVivo.setTexture(textureAlive);
+    float scaleX = size.x / textureAlive.getSize().x;
+    float scaleY = size.y / textureAlive.getSize().y;
+    spriteVivo.setScale(scaleX, scaleY);
+
     if (rand() % 5 == 2) {
-        speed = Vector2f(6.f, 6.f);
-        shape.setFillColor(Color::Cyan);
-    }
+        speed = Vector2f(6.f, 6.f);}
     else {
-        speed = Vector2f(4.f, 4.f);
-    }
+        speed = Vector2f(4.f, 4.f);}
     acc = Vector2f(0.f, 0.f);
-    shape.setOutlineThickness(3);
-    shape.setOutlineColor(Color::Cyan);
     rebotesx = 0;
     rebotesy = 0;
     vivo = true;
@@ -114,55 +124,68 @@ Pato1::Pato1(Vector2f size, RenderWindow& window) {
 
 void Pato1::update() {
     speed -= acc; // no implementado todavía
-    shape.move(speed);
+    spriteVivo.move(speed); // Mover el sprite en lugar de la forma
 
-    if (shape.getPosition().x + shape.getSize().x >= 1200 || shape.getPosition().x < 0) {//que no salga de los ejes x
+    // Revisar los límites del sprite escalado
+    if (spriteVivo.getPosition().x + spriteVivo.getGlobalBounds().width >= 1200 || spriteVivo.getPosition().x < 0) {
         speed.x *= -1;
-        shape.setOutlineColor(Color::White);
         rebotesx++;
     }
 
     if (vivo) {
-        if (shape.getPosition().y + shape.getSize().y >= 1000 || shape.getPosition().y < 0) {//aumenta los rebotes y hace que suba
+        if (spriteVivo.getPosition().y + spriteVivo.getGlobalBounds().height >= 1000 || spriteVivo.getPosition().y < 0) {
             speed.y *= -1;
-            shape.setOutlineColor(Color::Green);
             rebotesy++;
         }
     }
-    else if (shape.getPosition().y + shape.getSize().y >= 1000) {
+    else if (spriteVivo.getPosition().y + spriteVivo.getGlobalBounds().height >= 1000) {
         speed.y = 0;
         // La lógica de terminar la ronda se maneja en el main
     }
 
-    if (vivo && rebotesy > 1 && shape.getPosition().y + shape.getSize().y >= 600) {//se agrego para que no se mueva por toda la patalla el pato
+    if (vivo && rebotesy > 1 && spriteVivo.getPosition().y + spriteVivo.getGlobalBounds().height >= 600) {
         speed.y *= -1;
+    }
+    if (!vivo && getPositionY() + tamanoY() < 1000) {
+        acc.y = 0.5f;
+        speed += acc;
+        this->spriteMuerto.move(0, speed.y);
     }
 }
 
 void Pato1::drawTo(RenderWindow& window) {
-    window.draw(shape);
+    if (vivo) {
+        window.draw(spriteVivo);
+    }
+    else {
+        window.draw(spriteMuerto);
+    }
 }
-int Pato1::getPositionY(){//se agrego para manipular codigo más facil
-return shape.getPosition().y; 
+int Pato1::getPositionY(){
+return spriteVivo.getPosition().y;
 }
-int Pato1::tamanoY() {//se agrego para manipular codigo más facil
-    return shape.getSize().y;
+int Pato1::tamanoY() {
+    return spriteVivo.getTexture()->getSize().y;
 }
 bool Pato1::disparoAcertado(Vector2i position) {
-    float x = shape.getPosition().x;
-    float y = shape.getPosition().y;
-    float w = shape.getSize().x;
-    float h = shape.getSize().y;
+    float x = spriteVivo.getPosition().x;
+    float y = spriteVivo.getPosition().y;
+    float w = spriteVivo.getTexture()->getSize().x;
+    float h = spriteVivo.getTexture()->getSize().y;
     int mouseX = position.x;
     int mouseY = position.y;
+
     if (mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h) {
-        shape.setFillColor(Color::Green);//esto maneja la logica para que caiga el pato
+        spriteMuerto.setTexture(textureDead);
+        spriteMuerto.setPosition(spriteVivo.getPosition());
         vivo = false;
         speed.y = 4;
         speed.x = 0;
         return true;
     }
-    else return false;
+    else {
+        return false;
+    }
 }
 
 int Pato1::getRebotesY() const {
@@ -198,11 +221,7 @@ int main() {
     window.setFramerateLimit(120);
 
     Texture backgroundTexture;
-<<<<<<< HEAD
     if (!backgroundTexture.loadFromFile("texturas/Fondo.png")) {
-=======
-    if (!backgroundTexture.loadFromFile("Fondo.png")) {
->>>>>>> 27137b1d0c235ba186f687c0e71882783c1c0e9b
         return EXIT_FAILURE;
     }
     Sprite backgroundSprite(backgroundTexture);
@@ -222,7 +241,7 @@ int main() {
                 if (event.mouseButton.button == Mouse::Left && gameStarted && ron1.getBalas() > 0) {// si todavia se tienen balas
                     ron1.disparaBala();
                     if (pato != nullptr && pato->disparoAcertado(Mouse::getPosition(window))) {//comprueba si el pato existe y si el disparo acerto
-                        pato->vivo = false;//lo marca como muerto 
+                        pato->vivo = false;
                     }
                 }
             }
@@ -234,12 +253,12 @@ int main() {
             if (pato != nullptr) {
                 pato->update();
                 pato->drawTo(window);
-                if (pato->getRebotesY() == 5) {//mismo que abajo pero con rebotes en la parte superior de la pantalla
+                if (pato->getRebotesY() == 5) {
                     ron1.rondaTerminada();
                     delete pato;
-                    pato = nullptr;//lo desintegra
+                    pato = nullptr;
                 }
-                else if (!pato->vivo && pato->getPositionY() + pato->tamanoY() >= 1000) {//checa si toco el piso, en caso de que si inicia nueva ronda
+                else if (!pato->vivo && pato->getPositionY() + pato->tamanoY() >= 1000) {
                     ron1.rondaTerminada();
                     delete pato;
                     pato = nullptr;
