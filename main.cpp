@@ -240,18 +240,26 @@ private:
     int rondas;
     int vuelo;
     int prob;
+    int patosVolados; // contador de patos volados
+
 public:
     bool juegoSigue;
     Partida(int r, bool JS, int p);
     void jugar(RenderWindow& window);
-    void patosFuera();//la partida termina si se escapan esa cantidad de patos
+    void patosFuera();//la partida termina si llega a 3
+    void incrementarPatosVolados(); // nueva función para incrementar patos volados
+    void reiniciarPatosVolados(); // nueva función para reiniciar patos volados
+    int getPatosVolados() const; // nueva función para obtener patos volados
+    void drawPatosVolados(RenderWindow& window); // nueva función para dibujar cuadros amarillos
 };
+
 //partida.cpp
 Partida::Partida(int r, bool JS, int p) {
     rondas = r;
     juegoSigue = JS;
     vuelo = p;
     prob = rand() % 5;//probabilidad de un pato rapido
+    patosVolados = 0;
 }
 
 void Partida::patosFuera() {
@@ -262,7 +270,27 @@ void Partida::patosFuera() {
         this->vuelo = 0;
     }
 }
+void Partida::incrementarPatosVolados() {
+    patosVolados++;
+}
 
+void Partida::reiniciarPatosVolados() {
+    patosVolados = 0;
+}
+
+int Partida::getPatosVolados() const {
+    return patosVolados;
+}
+
+void Partida::drawPatosVolados(RenderWindow& window) {
+    for (int i = 0; i < patosVolados; i++) {
+        RectangleShape shape;
+        shape.setFillColor(Color::Yellow);
+        shape.setPosition(20, 850 + i * 40); // ajustar posición para la parte inferior izquierda
+        shape.setSize(Vector2f(30, 30));
+        window.draw(shape);
+    }
+}
 
 Pato1* pato = nullptr; //se hace un apuntador para poder eliminarlo totalmente del sistema y que no se sature la memoria(lo agregue pq trababa mi laptop)
 Partida partida(10, false, 0);
@@ -328,9 +356,6 @@ int main() {
     RenderWindow window(VideoMode(1200, 1000), "InfiniDuck");
     window.setFramerateLimit(120);
 
-
-
-
     Texture backgroundTexture;
     if (!backgroundTexture.loadFromFile("texturas/Fondo.png")) {
         return EXIT_FAILURE;
@@ -346,7 +371,8 @@ int main() {
             if (event.type == Event::MouseButtonPressed) {
                 if (event.mouseButton.button == Mouse::Right && !partida.juegoSigue) {
                     partida.juegoSigue = true;
-                    cout << "inicio juego" << endl;
+                    cout << "Inicio juego" << endl;
+                    partida.reiniciarPatosVolados();
                 }
 
                 if (event.mouseButton.button == Mouse::Left && partida.juegoSigue && ron1.getBalas() > 0) {
@@ -370,11 +396,13 @@ int main() {
                     delete pato;
                     pato = nullptr;
                     partida.patosFuera();
+                    partida.incrementarPatosVolados(); // incrementar patos volados
                 }
                 else if (!pato->vivo && pato->getPositionY() + pato->tamanoY() >= 1000) {
                     ron1.rondaTerminada();
                     delete pato;
                     pato = nullptr;
+                    partida.incrementarPatosVolados(); // incrementar patos volados
                 }
             }
             else if (ron1.getBalas() > 0) {
@@ -384,6 +412,7 @@ int main() {
 
         ron1.drawTo(window);
         ron1.update();
+        partida.drawPatosVolados(window); // dibujar cuadros amarillos
 
         window.display();
     }
