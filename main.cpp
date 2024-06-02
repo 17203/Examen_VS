@@ -351,6 +351,33 @@ int menu() {
 
     return EXIT_SUCCESS;
 }
+void puntuacion(RenderWindow& window, int puntuacionFinal) {
+    Font font;
+    if (!font.loadFromFile("fuentes/Pixel.ttf")) {
+        cerr << "Error cargando la fuente." << endl;
+        return;
+    }
+
+    Text text;
+    text.setFont(font);
+    text.setCharacterSize(50);
+    text.setFillColor(Color::White);
+    text.setString("Puntuacion final: " + to_string(puntuacionFinal));
+    text.setPosition(400, 400);
+
+    while (window.isOpen()) {
+        Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == Event::Closed) {
+                window.close();
+            }
+        }
+
+        window.clear();
+        window.draw(text);
+        window.display();
+    }
+}
 int main() {
     menu();
     RenderWindow window(VideoMode(1200, 1000), "InfiniDuck");
@@ -396,13 +423,12 @@ int main() {
                     delete pato;
                     pato = nullptr;
                     partida.patosFuera();
-                    partida.incrementarPatosVolados(); // incrementar patos volados
+                    partida.incrementarPatosVolados();
                 }
                 else if (!pato->vivo && pato->getPositionY() + pato->tamanoY() >= 1000) {
                     ron1.rondaTerminada();
                     delete pato;
                     pato = nullptr;
-                    partida.incrementarPatosVolados(); // incrementar patos volados
                 }
             }
             else if (ron1.getBalas() > 0) {
