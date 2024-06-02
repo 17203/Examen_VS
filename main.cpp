@@ -55,7 +55,7 @@ void Ronda::rondaTerminada() {
     puntuacion++;
     reiniciarBalas();
     enemigos--;
-    std::cout << "Ronda terminada" << std::endl; //no termina la roda D:
+    cout << "Ronda terminada" << endl; //no termina la roda D:
 }
 
 void Ronda::drawTo(RenderWindow& window) { //dibuja las balas de la ronda
@@ -107,22 +107,22 @@ Pato1::Pato1(Vector2f size, RenderWindow& window) {
     spriteVivo.setPosition({ static_cast<float>(rand() % 1200), 890.0f });//manera fancy que puso chatgpt pq me estaba conflictuando mucho y generaba patos en coordenadas que no iban
 
     if (!textureAlive.loadFromFile("texturas/PatoDU.png")) {
-        std::cout << "Error loading pato_vivo.png" << std::endl;
+        cout << "Error loading pato_vivo.png" << endl;
     }
     if (!textureLD.loadFromFile("texturas/PatoDU.png")) {
-        std::cout << "Error loading pato_vivo.png" << std::endl;
+        cout << "Error loading pato_vivo.png" << endl;
     }
     if (!textureLD.loadFromFile("texturas/PatoLD.png")) {
-        std::cout << "Error loading pato_vivo.png" << std::endl;
+        cout << "Error loading pato_vivo.png" << endl;
     }
     if (!textureLU.loadFromFile("texturas/PatoLU.png")) {
-        std::cout << "Error loading pato_vivo.png" << std::endl;
+        cout << "Error loading pato_vivo.png" << endl;
     }
     if (!textureDD.loadFromFile("texturas/PatoDD.png")) {
-        std::cout << "Error loading pato_vivo.png" << std::endl;
+        cout << "Error loading pato_vivo.png" << endl;
     }
     if (!textureDead.loadFromFile("texturas/pato_muerto.png")) {
-        std::cout << "Error loading pato_muerto.png" << std::endl;
+        cout << "Error loading pato_muerto.png" << endl;
     }
 
     spriteVivo.setTexture(textureAlive);
@@ -238,30 +238,98 @@ int Pato1::getRebotesY() const {
 class Partida {
 private:
     int rondas;
-    bool juegoSigue;
+    int vuelo;
     int prob;
-
 public:
-    Partida(int r, bool JS);
+    bool juegoSigue;
+    Partida(int r, bool JS, int p);
     void jugar(RenderWindow& window);
+    void patosFuera();//la partida termina si se escapan esa cantidad de patos
 };
 //partida.cpp
-Partida::Partida(int r, bool JS) {
+Partida::Partida(int r, bool JS, int p) {
     rondas = r;
     juegoSigue = JS;
+    vuelo = p;
     prob = rand() % 5;//probabilidad de un pato rapido
+}
+
+void Partida::patosFuera() {
+    vuelo++;
+    if (vuelo == 3) {
+        juegoSigue = false;
+        cout << "Juego terminado. Se escaparon 3 patos." << endl;
+        this->vuelo = 0;
+    }
 }
 
 
 Pato1* pato = nullptr; //se hace un apuntador para poder eliminarlo totalmente del sistema y que no se sature la memoria(lo agregue pq trababa mi laptop)
-Partida partida(10, true);
-bool gameStarted = false;//agregado para que cuando se pique a click derecho inicie el juego
-
+Partida partida(10, false, 0);
 void crearPato(RenderWindow& window);
 //main.cpp
+int menu() {
+    RenderWindow window(VideoMode(1200, 1000), "Detect Space Key Press");
+    Texture rulesTexture;
+    if (!rulesTexture.loadFromFile("texturas/Reglas.png")) {
+        return EXIT_FAILURE;
+    }
+
+    Texture menuTexture;
+    if (!menuTexture.loadFromFile("texturas/Menu.png")) {
+        return EXIT_FAILURE;
+    }
+    Sprite rulesSprite(rulesTexture);
+    rulesSprite.setScale(
+        window.getSize().x / static_cast<float>(rulesTexture.getSize().x),
+        window.getSize().y / static_cast<float>(rulesTexture.getSize().y)
+    );
+
+    Sprite menuSprite(menuTexture);
+    menuSprite.setScale(
+        window.getSize().x / static_cast<float>(menuTexture.getSize().x),
+        window.getSize().y / static_cast<float>(menuTexture.getSize().y)
+    );
+
+    // Variable para controlar la visualización del sprite de reglas
+    bool showRules = false;
+
+    // Bucle principal
+    while (window.isOpen()) {
+        Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == Event::Closed) {
+                window.close();
+            }
+            if (event.type == Event::KeyPressed) {
+                if (event.key.code == Keyboard::Enter) {
+                    window.close();
+                }
+                if (event.key.code == Keyboard::Space) {
+                    showRules = !showRules;  // Alternar entre mostrar y no mostrar el sprite de reglas
+                }
+            }
+        }
+
+        window.clear();
+        if (showRules) {
+            window.draw(rulesSprite);
+        }
+        else {
+            window.draw(menuSprite);
+        }
+        window.display();
+    }
+
+    return EXIT_SUCCESS;
+}
 int main() {
-    RenderWindow window(VideoMode(1200, 1000), "cazapato");
+    menu();
+    RenderWindow window(VideoMode(1200, 1000), "InfiniDuck");
     window.setFramerateLimit(120);
+
+
+
 
     Texture backgroundTexture;
     if (!backgroundTexture.loadFromFile("texturas/Fondo.png")) {
@@ -276,31 +344,32 @@ int main() {
                 window.close();
 
             if (event.type == Event::MouseButtonPressed) {
-                if (event.mouseButton.button == Mouse::Right && !gameStarted) {//comprueba si todavia no se a iniciado el juego, en caso de que si simplemente continuara
-                    gameStarted = true;
-                    cout << "inicio juego" << std::endl;
+                if (event.mouseButton.button == Mouse::Right && !partida.juegoSigue) {
+                    partida.juegoSigue = true;
+                    cout << "inicio juego" << endl;
                 }
 
-                if (event.mouseButton.button == Mouse::Left && gameStarted && ron1.getBalas() > 0) {// si todavia se tienen balas
+                if (event.mouseButton.button == Mouse::Left && partida.juegoSigue && ron1.getBalas() > 0) {
                     ron1.disparaBala();
-                    if (pato != nullptr && pato->disparoAcertado(Mouse::getPosition(window))) {//comprueba si el pato existe y si el disparo acerto
+                    if (pato != nullptr && pato->disparoAcertado(Mouse::getPosition(window))) {
                         pato->vivo = false;
                     }
                 }
             }
         }
 
-        window.clear();//limpia la ventana(no sabia que esto existia pero evita conflictos posteriores ya que al iniciar otra ronda las balas se sobreponian)
+        window.clear();
         window.draw(backgroundSprite);
-        if (gameStarted) {//cosas extrañas para que funcione
+        if (partida.juegoSigue) {
             if (pato != nullptr) {
                 pato->update();
                 pato->direccion();
                 pato->drawTo(window);
-                if (pato->getRebotesY() == 5) {
+                if (pato->getRebotesY() == 3) {
                     ron1.rondaTerminada();
                     delete pato;
                     pato = nullptr;
+                    partida.patosFuera();
                 }
                 else if (!pato->vivo && pato->getPositionY() + pato->tamanoY() >= 1000) {
                     ron1.rondaTerminada();
@@ -311,14 +380,13 @@ int main() {
             else if (ron1.getBalas() > 0) {
                 crearPato(window);
             }
-
-            ron1.drawTo(window);
-            ron1.update();
         }
+
+        ron1.drawTo(window);
+        ron1.update();
 
         window.display();
     }
-
     return 0;
 }
 
