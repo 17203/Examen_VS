@@ -10,7 +10,6 @@ using namespace sf;
 class Ronda {
 private:
     int balas;
-    int puntuacion;
     int enemigos;
     int cont;//contador de en que rondna va
 
@@ -26,7 +25,6 @@ public:
 //ronda.cpp
 Ronda::Ronda() {
     this->balas = 3;
-    this->puntuacion = 0;
     this->enemigos = 0;
     this->cont = 0;
 }
@@ -38,7 +36,6 @@ void Ronda::reiniciarBalas() {
 void Ronda::update() {
     if (balas == 0 && enemigos == 0) {
         reiniciarBalas();
-        puntuacion++;
         this->cont++;
     }
 }
@@ -52,7 +49,6 @@ int Ronda::disparaBala() {
 
 
 void Ronda::rondaTerminada() {
-    puntuacion++;
     reiniciarBalas();
     enemigos--;
     cout << "Ronda terminada" << endl; //no termina la roda D:
@@ -73,6 +69,119 @@ int Ronda::getBalas() const {
 }
 
 Ronda ron1;
+//partida.hpp
+class Partida {
+private:
+    int rondas;
+    int vuelo;
+    int prob;
+    int patosVolados; // contador de patos volados
+    int score;
+public:
+    bool juegoSigue;
+    Partida(int r, bool JS, int p);
+    void jugar(RenderWindow& window);
+    void patosFuera();//la partida termina si llega a 3
+    void incrementarPatosVolados(); // nueva función para incrementar patos volados
+    void reiniciarPatosVolados(); // nueva función para reiniciar patos volados
+    int getPatosVolados() const; // nueva función para obtener patos volados
+    void drawPatosVolados(RenderWindow& window); // nueva función para dibujar cuadros amarillos
+    int puntuacion();
+    void scoreIncrease();
+    int scoreFinal();
+};
+
+//partida.cpp
+Partida::Partida(int r, bool JS, int p) {
+    rondas = r;
+    juegoSigue = JS;
+    vuelo = p;
+    prob = rand() % 5;//probabilidad de un pato rapido
+    this->patosVolados = 0;
+    this->score = 0;
+}
+
+void Partida::patosFuera() {
+    vuelo++;
+    if (vuelo == 3) {
+        juegoSigue = false;
+        cout << "Juego terminado. Se escaparon 3 patos." << endl;
+        this->vuelo = 0;
+        puntuacion();
+    }
+}
+void Partida::scoreIncrease() {
+    score++;
+}
+int Partida::scoreFinal() {
+    score = score*250;
+    return score;
+}
+void Partida::incrementarPatosVolados() {
+    patosVolados++;
+}
+
+void Partida::reiniciarPatosVolados() {
+    patosVolados = 0;
+}
+
+int Partida::getPatosVolados() const {
+    return patosVolados;
+}
+
+void Partida::drawPatosVolados(RenderWindow& window) {
+    for (int i = 0; i < patosVolados; i++) {
+        RectangleShape shape;
+        shape.setFillColor(Color::Yellow);
+        shape.setPosition(20, 850 + i * 40); // ajustar posición para la parte inferior izquierda
+        shape.setSize(Vector2f(30, 30));
+        window.draw(shape);
+    }
+}
+int Partida::puntuacion() {
+    sf::RenderWindow window(sf::VideoMode(800, 600), "cierre esta ventana para volver a jugar");
+    Font font;
+    if (!font.loadFromFile("fuentes/Pixel.ttf")) {
+        return EXIT_FAILURE;
+    }
+
+    Texture puntuacionTexture;
+    if (!puntuacionTexture.loadFromFile("texturas/puntuacion.png")) {
+        return EXIT_FAILURE;
+    }
+    Sprite puntuacionSprite(puntuacionTexture);
+    puntuacionSprite.setScale(
+        window.getSize().x / static_cast<float>(puntuacionTexture.getSize().x),
+        window.getSize().y / static_cast<float>(puntuacionTexture.getSize().y)
+    );
+
+    Text text;
+    text.setFont(font);
+    text.setString(to_string(scoreFinal()));//funcion que no sabia que existia, convierte los datos que recibe a el dato que necesites
+    text.setCharacterSize(24);
+    text.setFillColor(sf::Color::White);
+
+    text.setPosition(370.f, 250.f);
+
+    while (window.isOpen()) {
+        Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == sf::Event::Closed) {
+                window.close();
+            }
+        }
+
+        window.clear();
+        window.draw(puntuacionSprite);
+        // Mostrar el puntaje final
+        window.draw(text);
+
+        window.display();
+    }
+
+    return EXIT_SUCCESS;
+}
+Partida partida(10, false, 0); //mover todo hacia arriba, se necesitan rondas para que la partida funcione y partidas para que los patos funcionen en referencia a estos
 //Rrectangle.hpp
 class Pato1 {
 private:
@@ -222,6 +331,7 @@ bool Pato1::disparoAcertado(Vector2i position) {
     if (mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h) {
         spriteMuerto.setPosition(spriteVivo.getPosition());
         vivo = false;
+        partida.scoreIncrease();
         speed.y = 4;
         speed.x = 0;
         return true;
@@ -234,66 +344,9 @@ bool Pato1::disparoAcertado(Vector2i position) {
 int Pato1::getRebotesY() const {
     return rebotesy;
 }
-//partida.hpp
-class Partida {
-private:
-    int rondas;
-    int vuelo;
-    int prob;
-    int patosVolados; // contador de patos volados
-
-public:
-    bool juegoSigue;
-    Partida(int r, bool JS, int p);
-    void jugar(RenderWindow& window);
-    void patosFuera();//la partida termina si llega a 3
-    void incrementarPatosVolados(); // nueva función para incrementar patos volados
-    void reiniciarPatosVolados(); // nueva función para reiniciar patos volados
-    int getPatosVolados() const; // nueva función para obtener patos volados
-    void drawPatosVolados(RenderWindow& window); // nueva función para dibujar cuadros amarillos
-};
-
-//partida.cpp
-Partida::Partida(int r, bool JS, int p) {
-    rondas = r;
-    juegoSigue = JS;
-    vuelo = p;
-    prob = rand() % 5;//probabilidad de un pato rapido
-    patosVolados = 0;
-}
-
-void Partida::patosFuera() {
-    vuelo++;
-    if (vuelo == 3) {
-        juegoSigue = false;
-        cout << "Juego terminado. Se escaparon 3 patos." << endl;
-        this->vuelo = 0;
-    }
-}
-void Partida::incrementarPatosVolados() {
-    patosVolados++;
-}
-
-void Partida::reiniciarPatosVolados() {
-    patosVolados = 0;
-}
-
-int Partida::getPatosVolados() const {
-    return patosVolados;
-}
-
-void Partida::drawPatosVolados(RenderWindow& window) {
-    for (int i = 0; i < patosVolados; i++) {
-        RectangleShape shape;
-        shape.setFillColor(Color::Yellow);
-        shape.setPosition(20, 850 + i * 40); // ajustar posición para la parte inferior izquierda
-        shape.setSize(Vector2f(30, 30));
-        window.draw(shape);
-    }
-}
 
 Pato1* pato = nullptr; //se hace un apuntador para poder eliminarlo totalmente del sistema y que no se sature la memoria(lo agregue pq trababa mi laptop)
-Partida partida(10, false, 0);
+
 void crearPato(RenderWindow& window);
 //main.cpp
 int menu() {
@@ -350,33 +403,6 @@ int menu() {
     }
 
     return EXIT_SUCCESS;
-}
-void puntuacion(RenderWindow& window, int puntuacionFinal) {
-    Font font;
-    if (!font.loadFromFile("fuentes/Pixel.ttf")) {
-        cerr << "Error cargando la fuente." << endl;
-        return;
-    }
-
-    Text text;
-    text.setFont(font);
-    text.setCharacterSize(50);
-    text.setFillColor(Color::White);
-    text.setString("Puntuacion final: " + to_string(puntuacionFinal));
-    text.setPosition(400, 400);
-
-    while (window.isOpen()) {
-        Event event;
-        while (window.pollEvent(event)) {
-            if (event.type == Event::Closed) {
-                window.close();
-            }
-        }
-
-        window.clear();
-        window.draw(text);
-        window.display();
-    }
 }
 int main() {
     menu();
