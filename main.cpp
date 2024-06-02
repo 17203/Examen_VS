@@ -79,8 +79,14 @@ private:
     Vector2f speed;
     Vector2f acc;
     Texture textureAlive;
+    Texture textureLD;
+    Texture textureLU;
+    Texture textureDD;
     Texture textureDead;
     Sprite spriteVivo;
+    Sprite spriteLD;
+    Sprite spriteLU;
+    Sprite spriteDD;
     Sprite spriteMuerto;
     int rebotesx;// ?
     int rebotesy;
@@ -90,6 +96,7 @@ public:
     Pato1(Vector2f size, RenderWindow& window);
     bool disparoAcertado(Vector2i position);
     void update();
+    void direccion();
     int getPositionY();
     void drawTo(RenderWindow& window);
     int tamanoY();
@@ -97,25 +104,44 @@ public:
 };
 //Rrectangle.cpp
 Pato1::Pato1(Vector2f size, RenderWindow& window) {
-    spriteVivo.setPosition({ static_cast<float>(rand() % 1200), 940.0f });//manera fancy que puso chatgpt pq me estaba conflictuando mucho y generaba patos en coordenadas que no iban
+    spriteVivo.setPosition({ static_cast<float>(rand() % 1200), 890.0f });//manera fancy que puso chatgpt pq me estaba conflictuando mucho y generaba patos en coordenadas que no iban
 
-    if (!textureAlive.loadFromFile("texturas/prueba.png")) {
+    if (!textureAlive.loadFromFile("texturas/PatoDU.png")) {
         std::cout << "Error loading pato_vivo.png" << std::endl;
     }
-
+    if (!textureLD.loadFromFile("texturas/PatoDU.png")) {
+        std::cout << "Error loading pato_vivo.png" << std::endl;
+    }
+    if (!textureLU.loadFromFile("texturas/PatoDU.png")) {
+        std::cout << "Error loading pato_vivo.png" << std::endl;
+    }
+    if (!textureDD.loadFromFile("texturas/PatoDU.png")) {
+        std::cout << "Error loading pato_vivo.png" << std::endl;
+    }
     if (!textureDead.loadFromFile("texturas/pato_muerto.png")) {
         std::cout << "Error loading pato_muerto.png" << std::endl;
     }
 
     spriteVivo.setTexture(textureAlive);
+    spriteLD.setTexture(textureLD);
+    spriteLU.setTexture(textureLU);
+    spriteDD.setTexture(textureDD);
+    spriteMuerto.setTexture(textureDead);
+
     float scaleX = size.x / textureAlive.getSize().x;
     float scaleY = size.y / textureAlive.getSize().y;
     spriteVivo.setScale(scaleX, scaleY);
+    spriteLD.setScale(scaleX, scaleY);
+    spriteLU.setScale(scaleX, scaleY);
+    spriteDD.setScale(scaleX, scaleY);
+    spriteMuerto.setScale(scaleX, scaleY);
 
     if (rand() % 5 == 2) {
-        speed = Vector2f(6.f, 6.f);}
+        speed = Vector2f(6.f, 6.f);
+    }
     else {
-        speed = Vector2f(4.f, 4.f);}
+        speed = Vector2f(4.f, 4.f);
+    }
     acc = Vector2f(0.f, 0.f);
     rebotesx = 0;
     rebotesy = 0;
@@ -161,8 +187,8 @@ void Pato1::drawTo(RenderWindow& window) {
         window.draw(spriteMuerto);
     }
 }
-int Pato1::getPositionY(){
-return spriteVivo.getPosition().y;
+int Pato1::getPositionY() {
+    return spriteVivo.getPosition().y;
 }
 int Pato1::tamanoY() {
     return spriteVivo.getTexture()->getSize().y;
@@ -176,7 +202,6 @@ bool Pato1::disparoAcertado(Vector2i position) {
     int mouseY = position.y;
 
     if (mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h) {
-        spriteMuerto.setTexture(textureDead);
         spriteMuerto.setPosition(spriteVivo.getPosition());
         vivo = false;
         speed.y = 4;
@@ -190,6 +215,24 @@ bool Pato1::disparoAcertado(Vector2i position) {
 
 int Pato1::getRebotesY() const {
     return rebotesy;
+}
+void Pato1::direccion() {
+    if (speed.x > 0 && speed.y > 0) {
+        spriteDD.setPosition(spriteVivo.getPosition());
+        this->spriteDD.move(speed.x, speed.y);
+    }
+    if (speed.x > 0 && speed.y < 0) {
+        spriteVivo.setPosition(spriteVivo.getPosition());
+        this->spriteDD.move(speed.x, speed.y);
+    }
+    if (speed.x < 0 && speed.y < 0) {
+        spriteLU.setPosition(spriteVivo.getPosition());
+        this->spriteDD.move(speed.x, speed.y);
+    }
+    if (speed.x < 0 && speed.y > 0) {
+        spriteLD.setPosition(spriteLU.getPosition());
+        this->spriteDD.move(speed.x, speed.y);
+    }
 }
 //partida.hpp
 class Partida {
@@ -252,6 +295,7 @@ int main() {
         if (gameStarted) {//cosas extrañas para que funcione
             if (pato != nullptr) {
                 pato->update();
+                pato->direccion();
                 pato->drawTo(window);
                 if (pato->getRebotesY() == 5) {
                     ron1.rondaTerminada();
@@ -279,8 +323,8 @@ int main() {
 }
 
 void crearPato(RenderWindow& window) {//crea patos y ya :D
-    float x = float(50);
-    float y = float(50);
+    float x = float(100);
+    float y = float(100);
     pato = new Pato1(Vector2f(x, y), window);
     pato->drawTo(window);
 }
