@@ -350,7 +350,7 @@ Pato1* pato = nullptr; //se hace un apuntador para poder eliminarlo totalmente d
 void crearPato(RenderWindow& window);
 //main.cpp
 int menu() {
-    RenderWindow window(VideoMode(1200, 1000), "Detect Space Key Press");
+    RenderWindow window(VideoMode(1200, 1000), "enter o cerrar para continuar(Menu principal)");
     Texture rulesTexture;
     if (!rulesTexture.loadFromFile("texturas/Reglas.png")) {
         return EXIT_FAILURE;
