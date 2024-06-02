@@ -112,10 +112,13 @@ Pato1::Pato1(Vector2f size, RenderWindow& window) {
     if (!textureLD.loadFromFile("texturas/PatoDU.png")) {
         std::cout << "Error loading pato_vivo.png" << std::endl;
     }
-    if (!textureLU.loadFromFile("texturas/PatoDU.png")) {
+    if (!textureLD.loadFromFile("texturas/PatoLD.png")) {
         std::cout << "Error loading pato_vivo.png" << std::endl;
     }
-    if (!textureDD.loadFromFile("texturas/PatoDU.png")) {
+    if (!textureLU.loadFromFile("texturas/PatoLU.png")) {
+        std::cout << "Error loading pato_vivo.png" << std::endl;
+    }
+    if (!textureDD.loadFromFile("texturas/PatoDD.png")) {
         std::cout << "Error loading pato_vivo.png" << std::endl;
     }
     if (!textureDead.loadFromFile("texturas/pato_muerto.png")) {
@@ -146,6 +149,21 @@ Pato1::Pato1(Vector2f size, RenderWindow& window) {
     rebotesx = 0;
     rebotesy = 0;
     vivo = true;
+}
+
+void Pato1::direccion() {//cambia el sprite en funcion de la direccionn del pato
+    if (speed.x > 0 && speed.y > 0) {//vectores D:
+        spriteVivo.setTexture(textureDD);
+    }
+    else if (speed.x > 0 && speed.y < 0) {
+        spriteVivo.setTexture(textureAlive);
+    }
+    else if (speed.x < 0 && speed.y < 0) {
+        spriteVivo.setTexture(textureLU);
+    }
+    else if (speed.x < 0 && speed.y > 0) {
+        spriteVivo.setTexture(textureLD);
+    }
 }
 
 void Pato1::update() {
@@ -215,24 +233,6 @@ bool Pato1::disparoAcertado(Vector2i position) {
 
 int Pato1::getRebotesY() const {
     return rebotesy;
-}
-void Pato1::direccion() {
-    if (speed.x > 0 && speed.y > 0) {
-        spriteDD.setPosition(spriteVivo.getPosition());
-        this->spriteDD.move(speed.x, speed.y);
-    }
-    if (speed.x > 0 && speed.y < 0) {
-        spriteVivo.setPosition(spriteVivo.getPosition());
-        this->spriteDD.move(speed.x, speed.y);
-    }
-    if (speed.x < 0 && speed.y < 0) {
-        spriteLU.setPosition(spriteVivo.getPosition());
-        this->spriteDD.move(speed.x, speed.y);
-    }
-    if (speed.x < 0 && speed.y > 0) {
-        spriteLD.setPosition(spriteLU.getPosition());
-        this->spriteDD.move(speed.x, speed.y);
-    }
 }
 //partida.hpp
 class Partida {
